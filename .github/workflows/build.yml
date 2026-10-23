@@ -47,6 +47,16 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
+      - name: Patch SDK for CS2 1.41.9.2
+        # 1.41.9.2 added IVEngineServer2::IsSpawnGroupLoadedForClient after MakeSpawnGroupActive (s2sdk 2261b6d),
+        # without it every engine call past that slot is off by one
+        shell: bash
+        run: |
+          f=CS2Fixes/sdk/public/engine2/ivengineserver2.h
+          grep -q IsSpawnGroupLoadedForClient "$f" || sed -i '/MakeSpawnGroupActive(/a\    virtual bool IsSpawnGroupLoadedForClient( CPlayerSlot nSlot, SpawnGroupHandle_t spawnGroup ) = 0;' "$f"
+          grep -n -A1 'MakeSpawnGroupActive(' "$f"
+          test "$(grep -c IsSpawnGroupLoadedForClient "$f")" = 1
+
       - name: Checkout Metamod
         uses: actions/checkout@v7
         with:
